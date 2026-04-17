@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ordre Royal de la Confrerie du Taste-Cerises de Biercee</title>
+  <meta name="description" content="Confrerie gastronomique fondee en 1975 a Biercee. Gardiens de La Flambee, de la tarte aux cerises et du folklore wallon.">
+  <meta property="og:title" content="Ordre Royal de la Confrerie du Taste-Cerises de Biercee">
+  <meta property="og:description" content="Heritiers du gout, Gardiens de Biercee. Depuis 1975.">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root {
+      --griotte: #8B0000;
+      --griotte-light: #a31515;
+      --or: #D4AF37;
+      --or-light: #e6c555;
+      --creme: #FDFBF7;
+      --creme-dark: #F5F0E8;
+      --vert: #2D5A27;
+      --noir: #1a1a1a;
+      --text: #2c2c2c;
+      --text-light: #666;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; font-size: 16px; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      background: var(--creme);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NAV ── */
+    .nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.4s ease;
+    }
+    .nav.scrolled {
+      background: rgba(253, 251, 247, 0.96);
+      backdrop-filter: blur(12px);
+      padding: 0.6rem 2rem;
+      box-shadow: 0 1px 20px rgba(0,0,0,0.08);
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+    }
+    .nav-logo img {
+      height: 44px;
+      width: auto;
+      filter: brightness(0) invert(1);
+      transition: filter 0.4s;
+    }
+    .nav.scrolled .nav-logo img { filter: none; }
+    .nav-logo-text {
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      font-size: 1rem;
+      color: #fff;
+      letter-spacing: 0.05em;
+      transition: color 0.4s;
+      line-height: 1.2;
+    }
+    .nav.scrolled .nav-logo-text { color: var(--griotte); }
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+      align-items: center;
+    }
+    .nav-links a {
+      color: rgba(255,255,255,0.9);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: color 0.3s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; left: 0;
+      width: 0; height: 2px;
+      background: var(--or);
+      transition: width 0.3s;
+    }
+    .nav-links a:hover::after { width: 100%; }
+    .nav.scrolled .nav-links a { color: var(--text); }
+    .nav.scrolled .nav-links a:hover { color: var(--griotte); }
+    .nav-cta {
+      background: var(--or) !important;
+      color: var(--noir) !important;
+      padding: 0.5rem 1.25rem;
+      border-radius: 100px;
+      font-weight: 600 !important;
+      font-size: 0.78rem !important;
+    }
+    .nav-cta::after { display: none !important; }
+    .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(212,175,55,0.4); }
+
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      z-index: 1001;
+    }
+    .hamburger span { width: 24px; height: 2px; background: #fff; transition: all 0.3s; }
+    .nav.scrolled .hamburger span { background: var(--noir); }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(160deg, rgba(100,0,0,0.88) 0%, rgba(50,0,0,0.82) 40%, rgba(10,5,0,0.88) 100%),
+        url('images/hero-bg.jpg') center/cover no-repeat;
+      z-index: 1;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 820px;
+      padding: 2rem;
+    }
+    .hero-seal {
+      width: 90px;
+      height: 90px;
+      margin: 0 auto 1.5rem;
+      opacity: 0.85;
+      filter: brightness(0) invert(1);
+    }
+    .hero-subtitle {
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--or);
+      margin-bottom: 1.25rem;
+    }
+    .hero h1 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(2rem, 5vw, 3.8rem);
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+    }
+    .hero h1 span { display: block; color: var(--or); }
+    .hero-tagline {
+      font-size: 1.1rem;
+      color: rgba(255,255,255,0.75);
+      font-weight: 300;
+      margin-bottom: 2.5rem;
+      font-style: italic;
+    }
+    .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.9rem 2rem;
+      border-radius: 100px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      transition: all 0.3s;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-primary { background: var(--or); color: var(--noir); }
+    .btn-primary:hover { background: var(--or-light); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(212,175,55,0.35); }
+    .btn-outline { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,0.4); }
+    .btn-outline:hover { border-color: #fff; background: rgba(255,255,255,0.1); }
+    .btn-griotte { background: var(--griotte); color: #fff; }
+    .btn-griotte:hover { background: var(--griotte-light); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(139,0,0,0.3); }
+
+    /* ── COUNTDOWN ── */
+    .countdown-bar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      z-index: 2;
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(10px);
+      padding: 1.1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3rem;
+      flex-wrap: wrap;
+    }
+    .countdown-label {
+      font-family: 'Cinzel', serif;
+      color: var(--or);
+      font-size: 0.78rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .countdown-units { display: flex; gap: 1.5rem; }
+    .countdown-unit { text-align: center; }
+    .countdown-unit .number {
+      font-family: 'Cinzel', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #fff;
+      display: block;
+      line-height: 1;
+    }
+    .countdown-unit .label {
+      font-size: 0.6rem;
+      color: rgba(255,255,255,0.55);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-top: 0.2rem;
+    }
+
+    /* ── SECTIONS ── */
+    section { padding: 6rem 2rem; }
+    .section-header { text-align: center; margin-bottom: 4rem; }
+    .section-tag {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--or);
+      margin-bottom: 0.75rem;
+    }
+    .section-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+      font-weight: 700;
+      color: var(--noir);
+      line-height: 1.2;
+    }
+    .section-divider {
+      width: 60px; height: 3px;
+      background: linear-gradient(90deg, var(--griotte), var(--or));
+      margin: 1.25rem auto 0;
+      border-radius: 2px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    /* ── HISTOIRE / TIMELINE ── */
+    #histoire { background: var(--creme); }
+    .timeline {
+      position: relative;
+      max-width: 940px;
+      margin: 0 auto;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 50%; top: 0; bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--or), var(--griotte));
+      transform: translateX(-50%);
+    }
+    .timeline-item {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 3rem;
+      position: relative;
+    }
+    .timeline-item:nth-child(odd) { flex-direction: row-reverse; }
+    .timeline-dot {
+      position: absolute;
+      left: 50%; top: 1rem;
+      width: 16px; height: 16px;
+      background: var(--or);
+      border: 3px solid var(--creme);
+      border-radius: 50%;
+      transform: translateX(-50%);
+      z-index: 1;
+    }
+    .timeline-content {
+      width: 44%;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+    .timeline-item:nth-child(odd) .timeline-content { margin-right: auto; margin-left: 6%; }
+    .timeline-item:nth-child(even) .timeline-content { margin-left: auto; margin-right: 6%; }
+    .timeline-photo {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      display: block;
+    }
+    .timeline-body { padding: 1.5rem; }
+    .timeline-year {
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--griotte);
+      margin-bottom: 0.5rem;
+    }
+    .timeline-text {
+      font-size: 0.88rem;
+      line-height: 1.7;
+      color: var(--text-light);
+    }
+
+    /* ── TERROIR / PRODUITS ── */
+    #terroir { background: var(--noir); color: #fff; }
+    #terroir .section-title { color: #fff; }
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .product-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.4s;
+    }
+    .product-card:hover {
+      border-color: var(--or);
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    .product-img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      display: block;
+    }
+    .product-body { padding: 1.75rem; text-align: center; }
+    .product-card h3 {
+      font-family: 'Cinzel', serif;
+      font-size: 1.25rem;
+      color: var(--or);
+      margin-bottom: 0.75rem;
+    }
+    .product-card p {
+      font-size: 0.88rem;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.65);
+    }
+    .product-badge {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.3rem 0.9rem;
+      background: rgba(212,175,55,0.15);
+      color: var(--or);
+      border-radius: 100px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── CRI DE RALLIEMENT ── */
+    .cri-banner {
+      background: var(--creme-dark);
+      text-align: center;
+      padding: 4rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .cri-cherry {
+      position: absolute;
+      opacity: 0.06;
+      width: 200px;
+    }
+    .cri-cherry.left { left: -30px; top: 50%; transform: translateY(-50%); }
+    .cri-cherry.right { right: -30px; top: 50%; transform: translateY(-50%) scaleX(-1); }
+    .cri-text {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.4rem, 3.5vw, 2.3rem);
+      font-weight: 700;
+      color: var(--griotte);
+      position: relative;
+      z-index: 1;
+    }
+    .cri-text span { color: var(--or); }
+
+    /* ── SYMBOLES ── */
+    #symboles { background: var(--creme); }
+    .symboles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .symbole-card {
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+      transition: all 0.3s;
+      border: 1px solid transparent;
+    }
+    .symbole-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      border-color: var(--or);
+    }
+    .symbole-img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      display: block;
+      background: var(--creme-dark);
+    }
+    .symbole-img.contain {
+      object-fit: contain;
+      padding: 1.5rem;
+      background: var(--creme-dark);
+    }
+    .symbole-body { padding: 1.5rem; text-align: center; }
+    .symbole-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+    .symbole-card h3 {
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      color: var(--griotte);
+      margin-bottom: 0.6rem;
+    }
+    .symbole-card p {
+      font-size: 0.83rem;
+      line-height: 1.65;
+      color: var(--text-light);
+    }
+
+    /* ── GALERIE ── */
+    #galerie { background: var(--noir); padding: 5rem 2rem; }
+    #galerie .section-title { color: #fff; }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: auto;
+      gap: 0.75rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .gallery-item {
+      overflow: hidden;
+      border-radius: 10px;
+      cursor: pointer;
+      position: relative;
+    }
+    .gallery-item img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.5s ease;
+    }
+    .gallery-item:hover img { transform: scale(1.06); }
+    .gallery-item.large { grid-column: span 5; grid-row: span 2; min-height: 320px; }
+    .gallery-item.medium { grid-column: span 4; min-height: 200px; }
+    .gallery-item.small { grid-column: span 3; min-height: 200px; }
+    .gallery-caption {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.6));
+      padding: 1.25rem 1rem 0.75rem;
+      color: rgba(255,255,255,0.85);
+      font-size: 0.78rem;
+      font-style: italic;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .gallery-item:hover .gallery-caption { opacity: 1; }
+
+    /* ── CARTE ── */
+    #carte { background: var(--creme-dark); padding-bottom: 4rem; }
+    .map-filters {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    .map-filter {
+      padding: 0.5rem 1.25rem;
+      border: 1.5px solid var(--griotte);
+      border-radius: 100px;
+      background: transparent;
+      color: var(--griotte);
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: 'Inter', sans-serif;
+    }
+    .map-filter.active, .map-filter:hover { background: var(--griotte); color: #fff; }
+    .map-wrapper { max-width: 1100px; margin: 0 auto; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 30px rgba(0,0,0,0.1); }
+    #map { height: 440px; width: 100%; }
+
+    /* ── CHAPITRE ── */
+    #chapitre {
+      background: linear-gradient(135deg, var(--griotte), #4a0000);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .chapitre-photo {
+      position: absolute;
+      inset: 0;
+      background: url('images/photo-presse.jpg') center/cover no-repeat;
+      opacity: 0.12;
+    }
+    #chapitre .section-tag { color: var(--or); }
+    #chapitre .section-title { color: #fff; }
+    .chapitre-inner { position: relative; z-index: 1; text-align: center; }
+    .chapitre-date {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 700;
+      color: var(--or);
+      margin-bottom: 1rem;
+    }
+    .chapitre-programme {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1.5rem;
+      margin: 3rem auto;
+      max-width: 900px;
+    }
+    .programme-item {
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .programme-time { font-family: 'Cinzel', serif; color: var(--or); font-size: 0.88rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .programme-desc { font-size: 0.83rem; color: rgba(255,255,255,0.75); line-height: 1.5; }
+
+    /* ── REJOINDRE ── */
+    #rejoindre { background: var(--creme); }
+    .join-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      max-width: 1000px;
+      margin: 0 auto;
+      align-items: start;
+    }
+    .join-text h3 { font-family: 'Cinzel', serif; font-size: 1.6rem; color: var(--noir); margin-bottom: 1rem; }
+    .join-text p { font-size: 0.93rem; line-height: 1.8; color: var(--text-light); margin-bottom: 1.25rem; }
+    .join-stats { display: flex; gap: 2rem; margin-top: 1.5rem; flex-wrap: wrap; justify-content: center; }
+    .join-stat { text-align: center; }
+    .join-stat .number { font-family: 'Cinzel', serif; font-size: 2rem; font-weight: 700; color: var(--griotte); }
+    .join-stat .label { font-size: 0.78rem; color: var(--text-light); }
+    .join-form { background: #fff; border-radius: 16px; padding: 2.5rem; box-shadow: 0 4px 30px rgba(0,0,0,0.06); }
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label { display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text); margin-bottom: 0.4rem; }
+    .form-group input, .form-group textarea {
+      width: 100%; padding: 0.75rem 1rem;
+      border: 1.5px solid #e0dbd2; border-radius: 8px;
+      font-family: 'Inter', sans-serif; font-size: 0.9rem;
+      background: var(--creme); transition: border-color 0.3s; outline: none;
+    }
+    .form-group input:focus, .form-group textarea:focus { border-color: var(--or); }
+    .form-group textarea { min-height: 100px; resize: vertical; }
+    .join-form .btn { width: 100%; justify-content: center; }
+
+    /* ── FOOTER ── */
+    footer { background: var(--noir); color: rgba(255,255,255,0.65); padding: 4rem 2rem 2rem; }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 3rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .footer-logo-wrap { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+    .footer-logo-wrap img { height: 48px; width: auto; }
+    .footer-logo-text { font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 700; color: var(--or); }
+    .footer-brand p { font-size: 0.84rem; line-height: 1.7; max-width: 300px; font-style: italic; }
+    .footer-col h4 { font-family: 'Cinzel', serif; font-size: 0.88rem; color: #fff; margin-bottom: 1rem; }
+    .footer-col a { display: block; color: rgba(255,255,255,0.55); text-decoration: none; font-size: 0.84rem; margin-bottom: 0.5rem; transition: color 0.3s; }
+    .footer-col a:hover { color: var(--or); }
+    .footer-bottom {
+      max-width: 1200px; margin: 3rem auto 0;
+      padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.08);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem; font-size: 0.78rem;
+    }
+    .social-links { display: flex; gap: 1rem; }
+    .social-links a { color: rgba(255,255,255,0.45); text-decoration: none; transition: color 0.3s; }
+    .social-links a:hover { color: var(--or); }
+
+    /* ── ANIMATIONS ── */
+    .fade-up { opacity: 0; transform: translateY(28px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 960px) {
+      .nav-links { display: none; }
+      .nav-links.open {
+        display: flex; flex-direction: column;
+        position: fixed; inset: 0;
+        background: rgba(253,251,247,0.98);
+        backdrop-filter: blur(20px);
+        justify-content: center; align-items: center;
+        gap: 2rem; z-index: 999;
+      }
+      .nav-links.open a { color: var(--noir) !important; font-size: 1.1rem; }
+      .hamburger { display: flex; }
+
+      .timeline::before { left: 20px; }
+      .timeline-dot { left: 20px; }
+      .timeline-item,
+      .timeline-item:nth-child(odd) { flex-direction: column; padding-left: 50px; }
+      .timeline-content,
+      .timeline-item:nth-child(odd) .timeline-content,
+      .timeline-item:nth-child(even) .timeline-content { width: 100%; margin: 0; }
+
+      .gallery-item.large { grid-column: span 7; }
+      .gallery-item.medium { grid-column: span 5; }
+      .gallery-item.small { grid-column: span 6; }
+
+      .join-grid { grid-template-columns: 1fr; gap: 2rem; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      section { padding: 4rem 1.25rem; }
+      .footer-grid { grid-template-columns: 1fr; }
+      .hero-actions { flex-direction: column; align-items: center; }
+      .products-grid { grid-template-columns: 1fr; }
+      .chapitre-programme { grid-template-columns: 1fr; }
+      .gallery-item.large, .gallery-item.medium, .gallery-item.small { grid-column: span 12; min-height: 220px; }
+    }
+
+    .leaflet-popup-content-wrapper { border-radius: 12px; font-family: 'Inter', sans-serif; }
+    .leaflet-popup-content { margin: 1rem; font-size: 0.85rem; line-height: 1.5; }
+    .leaflet-popup-content strong { font-family: 'Cinzel', serif; color: var(--griotte); display: block; margin-bottom: 0.25rem; }
+
+    /* ── HAMBURGER ANIMATION ── */
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    .hamburger span { transform-origin: center; }
+
+    /* ── BACK TO TOP ── */
+    .back-to-top {
+      position: fixed;
+      bottom: 2rem; right: 2rem;
+      width: 44px; height: 44px;
+      background: var(--griotte);
+      color: #fff;
+      border: none; border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(139,0,0,0.35);
+      opacity: 0; transform: translateY(10px);
+      transition: opacity 0.3s, transform 0.3s;
+      z-index: 800;
+    }
+    .back-to-top.visible { opacity: 1; transform: translateY(0); }
+    .back-to-top:hover { background: var(--griotte-light); }
+    .back-to-top svg { width: 18px; height: 18px; }
+
+    /* ── ACTIVE NAV LINK ── */
+    .nav-links a.active { color: var(--or) !important; }
+    .nav-links a.active::after { width: 100%; }
+
+    /* ── FORM FEEDBACK ── */
+    .form-success {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+    }
+    .form-success svg { width: 52px; height: 52px; color: var(--vert); margin-bottom: 1rem; }
+    .form-success h4 { font-family: 'Cinzel', serif; color: var(--griotte); margin-bottom: 0.5rem; }
+    .form-success p { font-size: 0.88rem; color: var(--text-light); line-height: 1.6; }
+
+    /* ── LEGAL MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(10,5,0,0.72);
+      backdrop-filter: blur(6px);
+      z-index: 2000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--creme);
+      border-radius: 20px;
+      width: 100%; max-width: 680px;
+      max-height: 88vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+      transform: translateY(20px) scale(0.98);
+      transition: transform 0.3s;
+      overflow: hidden;
+    }
+    .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+    .modal-head {
+      padding: 1.75rem 2rem 0;
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 1rem;
+      flex-shrink: 0;
+    }
+    .modal-head-title { font-family: 'Cinzel', serif; font-size: 1.25rem; color: var(--griotte); }
+    .modal-head-sub { font-size: 0.78rem; color: var(--text-light); margin-top: 0.2rem; }
+    .modal-close {
+      background: none; border: none; cursor: pointer;
+      color: var(--text-light); transition: color 0.2s;
+      padding: 0.25rem; flex-shrink: 0; margin-top: -0.1rem;
+    }
+    .modal-close:hover { color: var(--griotte); }
+    .modal-close svg { width: 22px; height: 22px; display: block; }
+    .modal-tabs {
+      display: flex; gap: 0;
+      padding: 1.25rem 2rem 0;
+      border-bottom: 1px solid #e8e2d8;
+      overflow-x: auto;
+      flex-shrink: 0;
+    }
+    .modal-tabs::-webkit-scrollbar { display: none; }
+    .modal-tab {
+      padding: 0.6rem 1.1rem;
+      font-size: 0.78rem; font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--text-light);
+      background: none; border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer; white-space: nowrap;
+      transition: color 0.2s, border-color 0.2s;
+      font-family: 'Inter', sans-serif;
+      margin-bottom: -1px;
+    }
+    .modal-tab.active { color: var(--griotte); border-bottom-color: var(--griotte); }
+    .modal-tab:hover:not(.active) { color: var(--text); }
+    .modal-body {
+      padding: 1.75rem 2rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-panel { display: none; }
+    .modal-panel.active { display: block; }
+    .modal-panel h3 {
+      font-family: 'Cinzel', serif;
+      font-size: 1rem; color: var(--griotte);
+      margin: 1.5rem 0 0.5rem;
+    }
+    .modal-panel h3:first-child { margin-top: 0; }
+    .modal-panel p {
+      font-size: 0.875rem; line-height: 1.75;
+      color: var(--text-light); margin-bottom: 0.75rem;
+    }
+    .modal-panel ul {
+      font-size: 0.875rem; line-height: 1.75;
+      color: var(--text-light); padding-left: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+    .modal-panel ul li { margin-bottom: 0.3rem; }
+    .modal-panel strong { color: var(--text); font-weight: 600; }
+    .modal-alcool-warning {
+      background: linear-gradient(135deg, rgba(139,0,0,0.06), rgba(212,175,55,0.06));
+      border: 1px solid rgba(139,0,0,0.15);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      font-size: 0.82rem;
+      color: var(--griotte);
+      font-weight: 500;
+      line-height: 1.6;
+      margin-top: 1rem;
+    }
+    .modal-fb-link {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      margin-top: 1.25rem;
+      padding: 0.6rem 1.25rem;
+      background: #1877f2; color: #fff;
+      border-radius: 8px; text-decoration: none;
+      font-size: 0.82rem; font-weight: 600;
+      transition: background 0.2s;
+    }
+    .modal-fb-link:hover { background: #1464d3; }
+    .modal-fb-link svg { width: 16px; height: 16px; fill: #fff; }
+    @media (max-width: 600px) {
+      .modal-head, .modal-body { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .modal-tabs { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .back-to-top { bottom: 1.25rem; right: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══ NAVIGATION ═══ -->
+  <nav class="nav" id="navbar">
+    <a href="#" class="nav-logo">
+      <img src="images/pocket-logo.png" alt="Blason Confrerie">
+      <span class="nav-logo-text">Taste-Cerises<br><small style="font-size:0.65em;font-weight:400;letter-spacing:0.08em;">de Biercee</small></span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#histoire">L'Ordre</a></li>
+      <li><a href="#terroir">Le Terroir</a></li>
+      <li><a href="#galerie">Galerie</a></li>
+      <li><a href="#carte">La Carte</a></li>
+      <li><a href="#chapitre">Agenda</a></li>
+      <li><a href="#rejoindre" class="nav-cta">Rejoindre</a></li>
+    </ul>
+    <div class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </div>
+  </nav>
+
+  <!-- ═══ HERO ═══ -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <img src="images/pocket-logo.png" alt="Blason" class="hero-seal">
+      <p class="hero-subtitle">Depuis 1975 &middot; Biercee, Wallonie</p>
+      <h1>
+        Ordre Royal de la Confrerie
+        <span>du Taste-Cerises</span>
+      </h1>
+      <p class="hero-tagline">&laquo; Heritiers du gout, Gardiens de Biercee &raquo;</p>
+      <div class="hero-actions">
+        <a href="#histoire" class="btn btn-primary">Decouvrir l'Ordre</a>
+        <a href="#terroir" class="btn btn-outline">Nos Produits</a>
+      </div>
+    </div>
+    <div class="countdown-bar">
+      <span class="countdown-label">52e Chapitre &middot; 12 juillet 2026</span>
+      <div class="countdown-units">
+        <div class="countdown-unit"><span class="number" id="cd-days">--</span><span class="label">Jours</span></div>
+        <div class="countdown-unit"><span class="number" id="cd-hours">--</span><span class="label">Heures</span></div>
+        <div class="countdown-unit"><span class="number" id="cd-minutes">--</span><span class="label">Minutes</span></div>
+        <div class="countdown-unit"><span class="number" id="cd-seconds">--</span><span class="label">Secondes</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ HISTOIRE ═══ -->
+  <section id="histoire">
+    <div class="section-header fade-up">
+      <p class="section-tag">Notre Patrimoine</p>
+      <h2 class="section-title">Une Histoire de Passion</h2>
+      <div class="section-divider"></div>
+    </div>
+    <div class="timeline">
+      <div class="timeline-item fade-up">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <img src="images/logo-blason.png" alt="Cerises de Biercee" class="timeline-photo" style="object-fit:contain;background:#faf7f0;padding:1rem;" loading="lazy">
+          <div class="timeline-body">
+            <div class="timeline-year">~1850 &mdash; Les Origines</div>
+            <p class="timeline-text">Au village de Biercee (Bos d'Vilers), la cerise devient le fruit le plus rentable. En 1875, elle est sacree fruit fetiche de la fete locale &mdash; la Ducasse aux Cerises de Biercee.</p>
+          </div>
+        </div>
+      </div>
+      <div class="timeline-item fade-up">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <img src="images/chapitre-1976.jpg" alt="Confrerie 1976" class="timeline-photo" loading="lazy">
+          <div class="timeline-body">
+            <div class="timeline-year">14 juillet 1975 &mdash; La Fondation</div>
+            <p class="timeline-text">Pour le centenaire de la Ducasse, la Confrerie du Taste-Cerises est constituee sous le chapiteau. Georges Pire, maitre distillateur, cree La Flambee pour l'occasion.</p>
+          </div>
+        </div>
+      </div>
+      <div class="timeline-item fade-up">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <img src="images/photo-ceremonie.jpg" alt="Chapitre 1977" class="timeline-photo" loading="lazy">
+          <div class="timeline-body">
+            <div class="timeline-year">1977 &mdash; La Reconnaissance</div>
+            <p class="timeline-text">Les statuts sont adoptes le 3 juin en assemblee generale. La Confrerie est reconnue lors de la 101e Ducasse. Toges et chapeaux sont dessines par Roger Leveque.</p>
+          </div>
+        </div>
+      </div>
+      <div class="timeline-item fade-up">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <img src="images/photo-presse.jpg" alt="Confrerie aujourd'hui" class="timeline-photo" loading="lazy">
+          <div class="timeline-body">
+            <div class="timeline-year">Aujourd'hui &mdash; La Continuite</div>
+            <p class="timeline-text">Sous la conduite du Grand-Maitre Nicolas Charles-Pirlot, la Confrerie perpeTue sa mission : defendre et promouvoir les traditions, le folklore et la gastronomie du terroir de Biercee.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CRI DE RALLIEMENT ═══ -->
+  <div class="cri-banner fade-up">
+    <img src="images/logo-blason.png" alt="" class="cri-cherry left" aria-hidden="true">
+    <img src="images/logo-blason.png" alt="" class="cri-cherry right" aria-hidden="true">
+    <p class="cri-text">&laquo;&nbsp;Et que flambe&nbsp;?&nbsp;&raquo; &mdash; <span>&laquo;&nbsp;Flambee&nbsp;!&nbsp;&raquo;</span></p>
+  </div>
+
+  <!-- ═══ TERROIR / PRODUITS ═══ -->
+  <section id="terroir">
+    <div class="section-header fade-up">
+      <p class="section-tag">Le Terroir</p>
+      <h2 class="section-title">Nos Produits Defendus</h2>
+      <div class="section-divider"></div>
+    </div>
+    <div class="products-grid">
+      <div class="product-card fade-up">
+        <img src="images/armoiries.jpg" alt="La Flambee" class="product-img">
+        <div class="product-body">
+          <h3>La Flambee</h3>
+          <p>Delicieuse harmonie d'eau-de-vie de cerise et de cerises entieres, elaboree par la Distillerie de Biercee. Se deguste fraiche ou chaude, dans un petit verre a pied.</p>
+          <span class="product-badge">33% vol. &middot; Recette artisanale</span>
+        </div>
+      </div>
+      <div class="product-card fade-up">
+        <img src="images/tarte.png" alt="La Tarte Geante" class="product-img">
+        <div class="product-body">
+          <h3>La Tarte Geante</h3>
+          <p>Confectionnee a la farine d'epeautre et nappee de plus de 12.000 cerises. Un monument culinaire de 130 kg et 1,65 m de diametre, recree chaque annee pour le Chapitre.</p>
+          <span class="product-badge">130 kg &middot; 12.000 cerises</span>
+        </div>
+      </div>
+      <div class="product-card fade-up">
+        <img src="images/blason-photo.jpg" alt="Le Pate a la Flambee" class="product-img">
+        <div class="product-body">
+          <h3>Le Pate a la Flambee</h3>
+          <p>Derniere recette validee par le Conseil Noble du Hainaut. Elabore avec le 1er boucher de Belgique 2011, a base de porc, d'echalotes, d'epices et de Flambee.</p>
+          <span class="product-badge">Artisanal &middot; Hainaut</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SYMBOLES ═══ -->
+  <section id="symboles">
+    <div class="section-header fade-up">
+      <p class="section-tag">Nos Traditions</p>
+      <h2 class="section-title">Les Symboles de l'Ordre</h2>
+      <div class="section-divider"></div>
+    </div>
+    <div class="symboles-grid">
+      <div class="symbole-card fade-up">
+        <img src="images/pocket-logo.png" alt="Armoiries" class="symbole-img contain">
+        <div class="symbole-body">
+          <h3>Les Armoiries</h3>
+          <p>Deux licornes attablees et acculees a deux croissants et deux canons de l'ecu, compose d'un taste-vin rempli de Flambee enflammee.</p>
+        </div>
+      </div>
+      <div class="symbole-card fade-up">
+        <img src="images/cerises.jpg" alt="La Tarte en preparation" class="symbole-img">
+        <div class="symbole-body">
+          <h3>La Tarte aux Cerises</h3>
+          <p>Chaque annee, la Confrerie confectionne cette tarte geante de 1,65 m de diametre, nappee de 12.000 cerises a la farine d'epeautre.</p>
+        </div>
+      </div>
+      <div class="symbole-card fade-up">
+        <img src="images/logo-blason.png" alt="Le Temps des Cerises" class="symbole-img contain">
+        <div class="symbole-body">
+          <h3>Le Temps des Cerises</h3>
+          <p>Chanson interpretee par le Maitre des Ceremonies lors du Chapitre. Paroles de J.-B. Clement (1866), musique d'A. Renard (1868).</p>
+        </div>
+      </div>
+      <div class="symbole-card fade-up">
+        <img src="images/photo-membre.jpg" alt="La Distillerie" class="symbole-img">
+        <div class="symbole-body">
+          <h3>La Distillerie de Biercee</h3>
+          <p>Fleuron du savoir-faire wallon, elle elabore La Flambee depuis le centenaire de la Ducasse. Un alambic artisanal, une tradition centenaire.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ GALERIE ═══ -->
+  <section id="galerie">
+    <div class="section-header fade-up">
+      <p class="section-tag" style="color:var(--or)">En Images</p>
+      <h2 class="section-title">La Vie de la Confrerie</h2>
+      <div class="section-divider"></div>
+    </div>
+    <div class="gallery-grid fade-up">
+      <div class="gallery-item large">
+        <img src="images/photo-presse.jpg" alt="Chapitre solennel">
+        <div class="gallery-caption">Chapitre solennel a la Distillerie</div>
+      </div>
+      <div class="gallery-item medium">
+        <img src="images/chapitre-1976.jpg" alt="Confrerie 1976">
+        <div class="gallery-caption">Les membres fondateurs, 1976</div>
+      </div>
+      <div class="gallery-item small">
+        <img src="images/armoiries.jpg" alt="La Flambee">
+        <div class="gallery-caption">Degustation de La Flambee</div>
+      </div>
+      <div class="gallery-item small">
+        <img src="images/photo-ceremonie.jpg" alt="Chapitre 1977">
+        <div class="gallery-caption">Chapitre 1977</div>
+      </div>
+      <div class="gallery-item medium">
+        <img src="images/cerises.jpg" alt="Preparation de la tarte">
+        <div class="gallery-caption">Confection de la tarte geante</div>
+      </div>
+      <div class="gallery-item medium">
+        <img src="images/tarte.png" alt="La tarte Taste-Cerise">
+        <div class="gallery-caption">La tarte geante &mdash; 130 kg</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CARTE INTERACTIVE ═══ -->
+  <section id="carte">
+    <div class="section-header fade-up">
+      <p class="section-tag">Explorer</p>
+      <h2 class="section-title">La Route du Taste-Cerise</h2>
+      <div class="section-divider"></div>
+    </div>
+    <div class="container">
+      <div class="map-filters fade-up">
+        <button class="map-filter active" data-filter="all">Tout voir</button>
+        <button class="map-filter" data-filter="ceremony">Ceremonies</button>
+        <button class="map-filter" data-filter="product">Produits</button>
+        <button class="map-filter" data-filter="heritage">Patrimoine</button>
+      </div>
+      <div class="map-wrapper fade-up">
+        <div id="map"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CHAPITRE / AGENDA ═══ -->
+  <section id="chapitre">
+    <div class="chapitre-photo"></div>
+    <div class="chapitre-inner">
+      <div class="section-header fade-up">
+        <p class="section-tag">Agenda 2026</p>
+        <h2 class="section-title">52e Chapitre Solennel</h2>
+        <div class="section-divider"></div>
+      </div>
+      <div class="chapitre-date fade-up">Dimanche 12 juillet 2026</div>
+      <p style="color:rgba(255,255,255,0.7);font-size:1rem;max-width:600px;margin:0.5rem auto 0;" class="fade-up">
+        Le rendez-vous annuel de la Confrerie. Intronisations, cortege, degustation de la tarte geante et agapes a la Grange de la Dime.
+      </p>
+      <div class="chapitre-programme fade-up">
+        <div class="programme-item">
+          <div class="programme-time">Matinee</div>
+          <p class="programme-desc">Te Deum en l'eglise Saint-Theodard, au centre de Biercee</p>
+        </div>
+        <div class="programme-item">
+          <div class="programme-time">Chapitre</div>
+          <p class="programme-desc">Intronisations coutumieres des sympathisants en l'eglise</p>
+        </div>
+        <div class="programme-item">
+          <div class="programme-time">Apero</div>
+          <p class="programme-desc">Degustation de La Flambee, cortege vers le kiosque du Village</p>
+        </div>
+        <div class="programme-item">
+          <div class="programme-time">13h45</div>
+          <p class="programme-desc">Agapes a la Grange de la Dime, Distillerie de Biercee</p>
+        </div>
+      </div>
+      <div class="fade-up" style="margin-top:2rem;">
+        <a href="https://www.facebook.com/Confrerie.Taste.Cerises" target="_blank" rel="noopener" class="btn btn-primary">Suivez-nous sur Facebook</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ REJOINDRE ═══ -->
+  <section id="rejoindre">
+    <div class="section-header fade-up">
+      <p class="section-tag">Devenir Ambassadeur</p>
+      <h2 class="section-title">Rejoignez la Confrerie</h2>
+      <div class="section-divider"></div>
+    </div>
+    <div class="join-grid">
+      <div class="join-text fade-up">
+        <h3>Devenez membre de l'Ordre Royal</h3>
+        <p>La Confrerie accueille tous ceux qui partagent la passion du terroir wallon, du folklore et de la convivialite. Rejoignez une communaute de passionnes qui depuis 1975 perpetuent l'art de vivre de Biercee.</p>
+        <p>En tant que membre, vous participerez aux Chapitres annuels, aux degustations, aux cortèges et aux evenements confraternels partout en Belgique.</p>
+        <div class="join-stats">
+          <div class="join-stat"><div class="number">51</div><div class="label">Chapitres celebres</div></div>
+          <div class="join-stat"><div class="number">1975</div><div class="label">Annee de fondation</div></div>
+          <div class="join-stat"><div class="number">1,5K</div><div class="label">Abonnes Facebook</div></div>
+        </div>
+      </div>
+      <form class="join-form fade-up" id="joinForm">
+        <div id="formFields">
+          <div class="form-group">
+            <label for="f-name">Nom complet</label>
+            <input id="f-name" type="text" placeholder="Votre nom" required>
+          </div>
+          <div class="form-group">
+            <label for="f-email">Email</label>
+            <input id="f-email" type="email" placeholder="votre@email.be" required>
+          </div>
+          <div class="form-group">
+            <label for="f-tel">Telephone</label>
+            <input id="f-tel" type="tel" placeholder="+32 ...">
+          </div>
+          <div class="form-group">
+            <label for="f-msg">Motivation</label>
+            <textarea id="f-msg" placeholder="Pourquoi souhaitez-vous rejoindre la Confrerie ?"></textarea>
+          </div>
+          <button type="submit" class="btn btn-griotte">Envoyer ma candidature</button>
+        </div>
+        <div class="form-success" id="formSuccess">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <h4>Candidature envoyee !</h4>
+          <p>Merci pour votre interet. La Confrerie vous recontactera prochainement pour votre intronisation.</p>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer>
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="footer-logo-wrap">
+          <img src="images/pocket-logo.png" alt="Blason">
+          <span class="footer-logo-text">Taste-Cerises de Biercee</span>
+        </div>
+        <p>&laquo; Defendre et promouvoir les traditions, le folklore et la gastronomie de la region et de notre terroir. &raquo;</p>
+      </div>
+      <div class="footer-col">
+        <h4>L'Ordre</h4>
+        <a href="#histoire">Notre Histoire</a>
+        <a href="#symboles">Nos Symboles</a>
+        <a href="#terroir">Le Terroir</a>
+        <a href="#galerie">La Galerie</a>
+      </div>
+      <div class="footer-col">
+        <h4>Pratique</h4>
+        <a href="#carte">La Carte</a>
+        <a href="#chapitre">Le Chapitre</a>
+        <a href="#rejoindre">Adhesion</a>
+        <a href="https://www.facebook.com/Confrerie.Taste.Cerises" target="_blank" rel="noopener">Facebook</a>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <a href="#" onclick="openLegal('mentions');return false;">Mentions Legales</a>
+        <a href="#" onclick="openLegal('image');return false;">Droit a l'Image</a>
+        <a href="#" onclick="openLegal('vie-privee');return false;">Vie Privee</a>
+        <a href="#" onclick="openLegal('alcools');return false;">Charte Alcools</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; Confrerie du Taste-Cerises de Biercee &mdash; 1975 / 2026</span>
+      <div class="social-links">
+        <a href="https://www.facebook.com/Confrerie.Taste.Cerises" target="_blank" rel="noopener" aria-label="Facebook">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═══ BACK TO TOP ═══ -->
+  <button class="back-to-top" id="backToTop" aria-label="Retour en haut" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+  </button>
+
+  <!-- ═══ LEGAL MODAL ═══ -->
+  <div class="modal-overlay" id="legalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <div class="modal-head-title" id="modalTitle">Informations Legales</div>
+          <div class="modal-head-sub">Ordre Royal de la Confrerie du Taste-Cerises de Biercee</div>
+        </div>
+        <button class="modal-close" onclick="closeLegal()" aria-label="Fermer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-tabs" role="tablist">
+        <button class="modal-tab active" role="tab" data-panel="mentions" onclick="switchTab(this)">Mentions Legales</button>
+        <button class="modal-tab" role="tab" data-panel="image" onclick="switchTab(this)">Droit a l'Image</button>
+        <button class="modal-tab" role="tab" data-panel="vie-privee" onclick="switchTab(this)">Vie Privee</button>
+        <button class="modal-tab" role="tab" data-panel="alcools" onclick="switchTab(this)">Charte Alcools</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Mentions Legales -->
+        <div class="modal-panel active" id="panel-mentions">
+          <h3>Editeur du site</h3>
+          <p><strong>Ordre Royal de la Confrerie du Taste-Cerises de Biercee ASBL</strong><br>
+          Siege social : Biercee, Thuin, Hainaut — Belgique<br>
+          Fondee le 14 juillet 1975</p>
+          <h3>Responsable de publication</h3>
+          <p>Grand-Maitre de la Confrerie. Toute demande peut etre adressee via la page Facebook officielle de la Confrerie.</p>
+          <h3>Hebergement</h3>
+          <p>Ce site est un site statique a but non commercial, heberge a titre associatif. Il ne collecte pas de donnees commerciales.</p>
+          <h3>Propriete intellectuelle</h3>
+          <p>L'ensemble des contenus (textes, images, blason, logo) est la propriete exclusive de la Confrerie du Taste-Cerises de Biercee. Toute reproduction sans autorisation ecrite est interdite.</p>
+          <a href="https://www.facebook.com/Confrerie.Taste.Cerises/" target="_blank" rel="noopener" class="modal-fb-link">
+            <svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            Nous contacter sur Facebook
+          </a>
+        </div>
+
+        <!-- Droit a l'Image -->
+        <div class="modal-panel" id="panel-image">
+          <h3>Photographies publiees sur ce site</h3>
+          <p>Les photographies presentees sur ce site sont la propriete de la Confrerie du Taste-Cerises de Biercee ou sont utilisees avec l'autorisation expresse de leurs auteurs (Distillerie de Biercee, membres de la Confrerie).</p>
+          <h3>Consentement des membres</h3>
+          <p>Tout membre intronise lors d'un Chapitre consent tacitement a etre photographie dans le cadre des evenements officiels de la Confrerie. Ces images peuvent etre publiees sur ce site, sur la page Facebook ou dans tout support de communication de l'ASBL.</p>
+          <h3>Demande de retrait</h3>
+          <p>Si vous souhaitez qu'une photographie vous representant soit retiree de ce site, adressez votre demande motivee via la page Facebook de la Confrerie. Votre demande sera traitee dans les meilleurs delais.</p>
+          <h3>Utilisation par des tiers</h3>
+          <p>Toute utilisation, reproduction ou diffusion des photographies publiees sur ce site sans autorisation ecrite de la Confrerie est strictement interdite.</p>
+          <a href="https://www.facebook.com/Confrerie.Taste.Cerises/" target="_blank" rel="noopener" class="modal-fb-link">
+            <svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            Demander le retrait d'une image
+          </a>
+        </div>
+
+        <!-- Vie Privee -->
+        <div class="modal-panel" id="panel-vie-privee">
+          <h3>Protection des donnees personnelles (RGPD)</h3>
+          <p>La Confrerie du Taste-Cerises de Biercee s'engage a proteger la vie privee de ses visiteurs, conformement au Reglement General sur la Protection des Donnees (RGPD — UE 2016/679) et a la loi belge du 30 juillet 2018.</p>
+          <h3>Donnees collectees</h3>
+          <p>Le formulaire de candidature collecte les donnees suivantes : nom, adresse email, numero de telephone et message de motivation. Ces donnees sont utilisees exclusivement pour traiter votre demande d'adhesion a la Confrerie.</p>
+          <h3>Conservation et tiers</h3>
+          <ul>
+            <li>Aucune donnee n'est vendue ni cedee a des tiers a des fins commerciales.</li>
+            <li>Ce site n'utilise pas de cookies de suivi ni de technologies d'analyse comportementale.</li>
+            <li>Les donnees des candidats sont conservees le temps du traitement de leur dossier.</li>
+          </ul>
+          <h3>Vos droits</h3>
+          <p>Conformement au RGPD, vous disposez d'un droit d'acces, de rectification et de suppression de vos donnees. Pour exercer ces droits, contactez la Confrerie via sa page Facebook officielle.</p>
+          <a href="https://www.facebook.com/Confrerie.Taste.Cerises/" target="_blank" rel="noopener" class="modal-fb-link">
+            <svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            Exercer vos droits RGPD
+          </a>
+        </div>
+
+        <!-- Charte Alcools -->
+        <div class="modal-panel" id="panel-alcools">
+          <h3>La Flambee — Responsabilite et Degustation</h3>
+          <p>La Confrerie du Taste-Cerises de Biercee defend et promeut <strong>La Flambee</strong>, eau-de-vie de cerises elaboree artisanalement par la Distillerie de Biercee, titrant environ 33 % vol. d'alcool.</p>
+          <h3>Consommation responsable</h3>
+          <ul>
+            <li>La Confrerie promeut exclusivement la <strong>degustation moderee et responsable</strong> de La Flambee.</li>
+            <li>La Flambee est degustee lors des Chapitres dans un esprit de convivialite et de decouverte du patrimoine wallon, jamais dans un esprit d'ivresse.</li>
+            <li>Des alternatives sans alcool sont toujours proposees lors des evenements de la Confrerie.</li>
+          </ul>
+          <h3>Legislation belge</h3>
+          <p>Conformement a la loi belge, la vente et la promotion de boissons alcoolisees aux personnes mineures (moins de 18 ans) sont strictement interdites. En consultant ce site, vous certifiez etre majeur(e) dans votre pays de residence.</p>
+          <h3>Avertissement sante</h3>
+          <div class="modal-alcool-warning">
+            L'abus d'alcool est dangereux pour la sante. A consommer avec moderation. La Confrerie encourage une approche patrimoniale et culturelle de La Flambee, dans le respect de chacun.
+          </div>
+          <a href="https://www.facebook.com/Confrerie.Taste.Cerises/" target="_blank" rel="noopener" class="modal-fb-link" style="margin-top:1.5rem;">
+            <svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            Page officielle Facebook
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SCRIPTS ═══ -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // ── Navbar scroll + active section highlight ──
+    const nav = document.getElementById('navbar');
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('#navLinks a[href^="#"]');
+
+    window.addEventListener('scroll', () => {
+      const y = window.scrollY;
+      nav.classList.toggle('scrolled', y > 60);
+      document.getElementById('backToTop').classList.toggle('visible', y > 400);
+
+      // Active nav link
+      let current = '';
+      sections.forEach(s => { if (y >= s.offsetTop - 120) current = s.id; });
+      navLinks.forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+      });
+    });
+
+    // ── Mobile menu ──
+    function toggleMenu() {
+      const links = document.getElementById('navLinks');
+      const ham = document.getElementById('hamburger');
+      const open = links.classList.toggle('open');
+      ham.classList.toggle('open', open);
+      ham.setAttribute('aria-expanded', open);
+    }
+    document.querySelectorAll('#navLinks a').forEach(a => a.addEventListener('click', () => {
+      document.getElementById('navLinks').classList.remove('open');
+      document.getElementById('hamburger').classList.remove('open');
+      document.getElementById('hamburger').setAttribute('aria-expanded', 'false');
+    }));
+
+    // ── Countdown to 12 July 2026 ──
+    const target = new Date('2026-07-12T09:00:00+02:00').getTime();
+    function updateCountdown() {
+      const diff = target - Date.now();
+      if (diff <= 0) return;
+      document.getElementById('cd-days').textContent    = String(Math.floor(diff / 86400000)).padStart(2,'0');
+      document.getElementById('cd-hours').textContent   = String(Math.floor((diff % 86400000) / 3600000)).padStart(2,'0');
+      document.getElementById('cd-minutes').textContent = String(Math.floor((diff % 3600000) / 60000)).padStart(2,'0');
+      document.getElementById('cd-seconds').textContent = String(Math.floor((diff % 60000) / 1000)).padStart(2,'0');
+    }
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+    // ── Fade-in on scroll ──
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+    // ── Leaflet Map ──
+    const map = L.map('map', { scrollWheelZoom: false }).setView([50.3133, 4.3050], 13);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 18
+    }).addTo(map);
+
+    const cherry = L.divIcon({
+      html: '<div style="background:#8B0000;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;box-shadow:0 2px 10px rgba(0,0,0,0.3);border:2px solid #D4AF37;">&#127826;</div>',
+      iconSize: [30, 30], iconAnchor: [15, 15], className: ''
+    });
+
+    const markers = [
+      { lat: 50.3133, lng: 4.3050, cat: 'ceremony', title: 'Eglise Saint-Theodard', desc: 'Lieu du Te Deum et du Chapitre annuel' },
+      { lat: 50.3240, lng: 4.2760, cat: 'product',  title: 'Distillerie de Biercee', desc: 'Berceau de La Flambee. Grange de la Dime pour les Agapes.' },
+      { lat: 50.3140, lng: 4.3070, cat: 'ceremony', title: 'Kiosque du Village', desc: 'Arrivee du cortege et apero de la Jeunesse' },
+      { lat: 50.3100, lng: 4.3020, cat: 'heritage', title: 'Biercee Village', desc: 'Berceau de la culture cerisicole depuis 1850' },
+    ];
+
+    const allMarkers = markers.map(m => {
+      const mk = L.marker([m.lat, m.lng], { icon: cherry })
+        .bindPopup(`<strong>${m.title}</strong>${m.desc}`);
+      mk._cat = m.cat;
+      mk.addTo(map);
+      return mk;
+    });
+
+    document.querySelectorAll('.map-filter').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.map-filter').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const f = btn.dataset.filter;
+        allMarkers.forEach(mk => {
+          if (f === 'all' || mk._cat === f) mk.addTo(map); else map.removeLayer(mk);
+        });
+      });
+    });
+
+    // ── Join form ──
+    document.getElementById('joinForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      document.getElementById('formFields').style.display = 'none';
+      document.getElementById('formSuccess').style.display = 'block';
+    });
+
+    // ── Legal modal ──
+    function openLegal(panel) {
+      document.getElementById('legalOverlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      switchToPanel(panel);
+    }
+    function closeLegal() {
+      document.getElementById('legalOverlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    function switchTab(btn) {
+      switchToPanel(btn.dataset.panel);
+    }
+    function switchToPanel(id) {
+      document.querySelectorAll('.modal-tab').forEach(t => t.classList.toggle('active', t.dataset.panel === id));
+      document.querySelectorAll('.modal-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + id));
+      const body = document.querySelector('.modal-body');
+      if (body) body.scrollTop = 0;
+    }
+    document.getElementById('legalOverlay').addEventListener('click', function(e) {
+      if (e.target === this) closeLegal();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLegal(); });
+  </script>
+</body>
+</html>
